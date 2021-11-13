@@ -31,7 +31,6 @@ apate.activeScene.init(game.entities.carMgr);
 apate.activeScene.init(game.entities.background);
 
 apate.run();
-game.start();
 
 // additional controls
 apate.keyMap.up.push('Space');

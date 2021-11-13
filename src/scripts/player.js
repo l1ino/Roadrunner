@@ -32,7 +32,7 @@ export default class Player extends Entity {
         this.jumpForce = 0.25;
         this.mass = 1;
 
-        this.animantionFramesPerSecond = 10;
+        this.animantionFPS = 10;
 
         this.reset();
     }
@@ -44,13 +44,15 @@ export default class Player extends Entity {
         this.velY = 0;
         this.readyToJump = true;
 
-        this.nextAnimationFrame = 1000 / this.animantionFramesPerSecond;
+        this.nextAnimationFrame = 1000 / this.animantionFPS;
         this.currentAnimationFrame = 0;
     }
 
     draw() {
         if (game.isAlive) {
             this.apate.screen.drawSprite(Math.floor(this.posX), Math.floor(this.posY), playerAnimationSprites[this.currentAnimationFrame], 2);
+        } else if (game.isFirstLoad) {
+            this.apate.screen.drawSprite(Math.floor(this.posX), Math.floor(this.posY), playerMainSprite, 2);
         } else {
             this.apate.screen.drawSprite(Math.floor(this.posX), Math.floor(this.posY), playerDeathSprite, 2);
         }
@@ -64,7 +66,7 @@ export default class Player extends Entity {
             this.currentAnimationFrame++;
             if (this.currentAnimationFrame == 8) this.currentAnimationFrame = 0;
 
-            this.nextAnimationFrame = 1000 / this.animantionFramesPerSecond;
+            this.nextAnimationFrame = 1000 / this.animantionFPS;
         }
 
         if (this.apate.isButtonPressed('up') && !this.apate.isButtonPressed('down')) {

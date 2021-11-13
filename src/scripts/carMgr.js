@@ -40,6 +40,8 @@ export default class CarMgr extends Entity {
     }
 
     update(delta) {
+        if (!game.isAlive) return;
+
         this.nextSpawn -= delta;
         if (this.nextSpawn <= 0) {
             this.nextSpawn = 1000 / this.spawnRate;
@@ -53,8 +55,6 @@ export default class CarMgr extends Entity {
     }
 
     physicsUpdate(delta) {
-        if (!game.isAlive) return;
-
         for (let i = 0; i < this.cars.length; i++) {
             this.cars[i].x -= game.gameSpeed * carSpeedMulit * delta;
 

@@ -20,6 +20,7 @@ class Game extends Entity {
 
         this.debugMode = false;
 
+        this.isFirstLoad = true;
         this.gravity = 0.025;
         this.highscore = 0;
         this.reset();
@@ -50,6 +51,7 @@ class Game extends Entity {
     }
 
     start() {
+        this.isFirstLoad = false;
         this.score = 1;
         this.isAlive = true;
         this.gameSpeed = 1.0;
@@ -80,8 +82,13 @@ class Game extends Entity {
             this.apate.screen.drawText(256 / 2 - textpixelwidth / 2, 10, text, this.apate.colors.white, { scale: 2, leftSpace: 3 });
 
             if (this.debugMode) {
-                this.apate.screen.drawText(2, 10, `Daytimemix: ${this.dayTimeColorMix}`, this.apate.colors.white);
-                this.apate.screen.drawText(150, 2, `Gamespeed: ${Math.round(this.gameSpeed * 100)}`, this.apate.colors.white);
+                this.apate.screen.drawText(2, 10, `Daytimemix: ${this.dayTimeColorMix.toFixed(2)}`, this.apate.colors.white);
+                this.apate.screen.drawText(2, 2, `Gamespeed: ${Math.round(this.gameSpeed * 100)}`, this.apate.colors.white);
+            }
+        } else if (this.isFirstLoad) {
+            this.apate.screen.drawText(46, 48, 'Press Space to start', this.apate.colors.black, { scale: 1.5, leftSpace: 3 });
+            if (this.apate.isButtonPressed('up')) {
+                this.start();
             }
         } else {
             let color = this.isNight ? this.apate.colors.white : this.apate.colors.black;
