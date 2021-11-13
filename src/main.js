@@ -34,7 +34,7 @@ apate.run();
 
 // additional controls
 apate.keyMap.up.push('Space');
-document.body.addEventListener('mousedown', () => {
+document.body.addEventListener('touchstart', () => {
     if (game.isAlive) {
         game.entities.player.jump();
     } else {
