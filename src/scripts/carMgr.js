@@ -1,4 +1,4 @@
-import Apate, { Entity, spriteMgr } from '../engine/apate-mini.js';
+import Apate, { Entity, spriteMgr } from '../engine/legacy-wrapper.js';
 import game from './game.js';
 
 const carImages = document.getElementsByClassName('carImg');

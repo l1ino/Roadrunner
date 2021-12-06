@@ -1,0 +1,30 @@
+import { Scene } from "./Scene.js";
+import { Screen } from "./Screen.js";
+import { Input } from "./Input.js";
+import { DrawLib } from "../utils/drawlib.js";
+import { Color } from "../utils/Color.js";
+import { Random } from "../utils/Random.js";
+import { PhysicLib } from "../utils/physiclib.js";
+export declare class Engine {
+    isCursorVisible: boolean;
+    private _activeScene;
+    private lastFrame;
+    protected screen: Screen;
+    draw: DrawLib;
+    input: Input;
+    random: Random;
+    physic: PhysicLib;
+    showInfo: boolean;
+    autoScale: boolean;
+    clearColor: Color;
+    set activeScene(value: Scene);
+    get activeScene(): Scene;
+    constructor();
+    run(): void;
+    clear(): void;
+    stop(): void;
+    resize(width: number, height: number): void;
+    rescale(scale: number): void;
+    get htmlElement(): HTMLElement;
+    private onWindowResize;
+}

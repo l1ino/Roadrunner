@@ -1,4 +1,4 @@
-import Apate, { Entity, color, ParticleSystem } from '../engine/apate-mini.js';
+import Apate, { Entity, color, ParticleSystem } from '../engine/legacy-wrapper.js';
 import game from './game.js';
 
 const skyStepSize = 128 / 8;
