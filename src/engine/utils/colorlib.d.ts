@@ -1,4 +1,4 @@
-import { Color } from "./color";
+import { Color } from "./color.js";
 declare class ColorLib {
     constructor();
     private componentToHex;

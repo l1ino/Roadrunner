@@ -36,7 +36,7 @@ apate.run();
 
 // additional controls
 //apate.keyMap.up.push('Space');
-apate._apate.input.registerButton(new Button('up', ['Space', 'KeyW', 'ArrowUp']));
+apate._apate.input.addButton(new Button('up', ['Space', 'KeyW', 'ArrowUp']));
 document.body.addEventListener('touchstart', () => {
     if (game.isAlive) {
         game.entities.player.jump();
