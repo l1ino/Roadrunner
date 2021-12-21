@@ -30,6 +30,11 @@ export class Color {
     r;
     g;
     b;
+    /**
+     * @param r red (0-255)
+     * @param g green (0-255)
+     * @param b blue (0-255)
+     */
     constructor(r, g, b) {
         this.r = r;
         this.g = g;

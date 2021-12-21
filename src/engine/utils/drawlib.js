@@ -5,6 +5,12 @@ export class DrawLib {
     constructor(screen) {
         this.screen = screen;
     }
+    _cameraOffsetX = 0;
+    _cameraOffsetY = 0;
+    setOffset(x, y) {
+        this._cameraOffsetX = x;
+        this._cameraOffsetY = y;
+    }
     async loadFont(url, characters, charWidth) {
         let data;
         data = await spritelib.load(url);
@@ -25,12 +31,12 @@ export class DrawLib {
         console.log(this.fontMap);
     }
     pixel(x, y, c) {
-        this.screen.setPixel(x, y, c.r, c.g, c.b);
+        this.screen.setPixel(x + this._cameraOffsetX, y + this._cameraOffsetY, c.r, c.g, c.b);
     }
     rect(x, y, w, h, c) {
         for (let i = 0; i < w; i++) {
             for (let j = 0; j < h; j++) {
-                this.screen.setPixel(i + x, j + y, c.r, c.g, c.b);
+                this.screen.setPixel(i + x + this._cameraOffsetX, j + y + this._cameraOffsetY, c.r, c.g, c.b);
             }
         }
     }
@@ -39,6 +45,8 @@ export class DrawLib {
             console.warn("Sprite not ready! skipping draw");
             return;
         }
+        x += this._cameraOffsetX;
+        y += this._cameraOffsetY;
         for (let i = 0, px = 0, py = 0; i < sprite.data.length; i += 4, px++) {
             if (px >= sprite.width) {
                 px = 0;
@@ -55,6 +63,8 @@ export class DrawLib {
             return;
         }
         scale = Math.round(scale);
+        x += this._cameraOffsetX;
+        y += this._cameraOffsetY;
         let i, px, py, dx, dy;
         for (i = 0, px = 0, py = 0; i < sprite.data.length; i += 4, px += scale) {
             if (px >= sprite.width * scale) {
@@ -75,6 +85,8 @@ export class DrawLib {
     }
     text(x, y, text, c, scale = 1, leftMargin = 1) {
         text = text.toUpperCase();
+        x += this._cameraOffsetX;
+        y += this._cameraOffsetY;
         for (let i = 0, char; i < text.length; i++) {
             if (text[i] == " ")
                 continue;
@@ -95,5 +107,29 @@ export class DrawLib {
                 sum += (this.fontMap[text[i]].width + leftMargin) * scale;
         }
         return sum;
+    }
+    fragment(x, y, sprite, calc, scale = 1) {
+        if (!sprite) {
+            console.warn("Sprite not ready! skipping draw");
+            return;
+        }
+        scale = Math.round(scale);
+        x += this._cameraOffsetX;
+        y += this._cameraOffsetY;
+        let i, px, py, dx, dy;
+        for (i = 0, px = 0, py = 0; i < sprite.data.length; i += 4, px += scale) {
+            if (px >= sprite.width * scale) {
+                px = 0;
+                py += scale;
+            }
+            if (sprite.data[i + 3] > 0) {
+                for (dx = 0; dx < scale; dx++) {
+                    for (dy = 0; dy < scale; dy++) {
+                        let color = calc(this.screen.pixelBuffer, (this.screen.width * (py + dy + y) + (px + dx + x)) * 3);
+                        this.screen.setPixel(px + dx + x, py + dy + y, color.r, color.g, color.b);
+                    }
+                }
+            }
+        }
     }
 }

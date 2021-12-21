@@ -1,6 +1,7 @@
 class Scene {
     entities = [];
     _apateInstance;
+    _transition;
     set apateInstance(value) {
         this._apateInstance = value;
         // automaticlly reinit entities when instance is changed
@@ -10,7 +11,13 @@ class Scene {
             this.entities[i].isInitialized = true;
         }
     }
-    constructor() { }
+    get apateInstance() {
+        return this._apateInstance;
+    }
+    constructor(transition, apateInstace) {
+        this._transition = transition;
+        this._apateInstance = apateInstace;
+    }
     add(entity) {
         this.entities.push(entity);
         // init
@@ -37,6 +44,25 @@ class Scene {
                 this.entities[i].draw(draw);
         }
     }
+    onLoad() { }
+    async load() {
+        if (this._apateInstance) {
+            if (this._apateInstance.activeScene._transition) {
+                this._apateInstance.activeScene.add(this._apateInstance.activeScene._transition);
+                await this._apateInstance.activeScene._transition.do("start");
+                this._apateInstance.activeScene.remove(this._apateInstance.activeScene._transition);
+            }
+            this.onLoad();
+            this._apateInstance.activeScene = this;
+            if (this._transition) {
+                this.add(this._transition);
+                await this._transition.do("end");
+                this.remove(this._transition);
+            }
+        }
+        else
+            console.error("Can't load scene without apate instance");
+    }
 }
 
 const planeVerts = [-1, 1, 0, 0, 1, 1, 1, 0, -1, -1, 0, 1, 1, -1, 1, 1];
@@ -46,6 +72,12 @@ class Screen {
     textureWidth = 128;
     textureHeight = 128;
     pixelBuffer;
+    get width() {
+        return this.textureWidth;
+    }
+    get height() {
+        return this.textureHeight;
+    }
     constructor() {
         this.canvas = document.createElement("canvas");
         this.canvas.width = this.textureWidth;
@@ -112,6 +144,7 @@ class Screen {
         this.textureWidth = textureWidth;
         this.textureHeight = textureHeight;
         this.pixelBuffer = new Uint8Array(this.textureWidth * this.textureHeight * 3);
+        this.scale = this.scale;
     }
     set scale(value) {
         this.canvas.width = this.textureWidth * value;
@@ -125,10 +158,8 @@ class Screen {
         let canvasRect = this.canvas.getBoundingClientRect();
         let windowsWidth = window.innerWidth - canvasRect.left;
         let windowsHeight = window.innerHeight - canvasRect.top;
-        let screenWidth = this.textureWidth;
-        let screenHeight = this.textureHeight;
-        let scaleWidth = Math.floor((windowsWidth / screenWidth));
-        let scaleHeight = Math.floor((windowsHeight / screenHeight));
+        let scaleWidth = Math.floor(windowsWidth / this.textureWidth);
+        let scaleHeight = Math.floor(windowsHeight / this.textureHeight);
         return Math.min(scaleWidth, scaleHeight);
     }
 }
@@ -136,61 +167,155 @@ const vs = `attribute vec2 aVertexPosition;attribute vec2 aTextureCoord;varying 
 const fs = `precision mediump float;varying vec2 vTextureCoord;uniform sampler2D uTexture;void main() {gl_FragColor = texture2D(uTexture, vTextureCoord);}`;
 
 class Button {
-    static up = new Button("up", ["KeyW", "ArrowUp"]);
-    static down = new Button("down", ["KeyS", "ArrowDown"]);
-    static left = new Button("left", ["KeyA", "ArrowLeft"]);
-    static right = new Button("right", ["KeyD", "ArrowRight"]);
-    static action1 = new Button("action1", ["KeyZ", "KeyN", "KeyC", "Space"]);
-    static action2 = new Button("action2", ["KeyX", "KeyM", "KeyV"]);
+    static up = new Button("up", ["KeyW", "ArrowUp"], 12);
+    static down = new Button("down", ["KeyS", "ArrowDown"], 13);
+    static left = new Button("left", ["KeyA", "ArrowLeft"], 14);
+    static right = new Button("right", ["KeyD", "ArrowRight"], 15);
+    static action1 = new Button("action1", ["KeyZ", "KeyN", "KeyC", "Space"], 0);
+    static action2 = new Button("action2", ["KeyX", "KeyM", "KeyV"], 2);
+    static cancel = new Button("cancel", ["Backspace", "ESC"], 1);
     name;
     keybinds;
-    constructor(name, keybinds) {
+    controllerBind;
+    constructor(name, keybinds, controllerBind) {
         this.name = name;
         this.keybinds = keybinds;
+        this.controllerBind = controllerBind;
+    }
+    addKeybind(key) {
+        this.keybinds.push(key);
+    }
+    removeKeybind(key) {
+        let i = this.keybinds.indexOf(key);
+        if (i > -1)
+            this.keybinds.splice(i, 1);
     }
 }
 
 // TODO: Controller handling
 class Input {
     pressedKeys = [];
-    isMousePressed = true;
-    registeredButtons = {};
-    constructor(rootElement) {
+    isMousePressed = false;
+    mousePos = { x: 0, y: 0 };
+    buttons = {};
+    registeredButtons = { up: [], down: [] };
+    controllers = [];
+    _screen;
+    _rootElement;
+    constructor(rootElement, screen) {
+        this._screen = screen;
+        this._rootElement = rootElement;
         window.addEventListener("keydown", this.onKeyDown.bind(this));
         window.addEventListener("keyup", this.onKeyUp.bind(this));
         rootElement.addEventListener("mousedown", this.onMouseDown.bind(this));
         rootElement.addEventListener("mouseup", this.onMouseUp.bind(this));
-        for (const btn of [Button.up, Button.down, Button.left, Button.right, Button.action1, Button.action2]) {
-            this.registerButton(btn);
+        rootElement.addEventListener("mousemove", this.onMouseMove.bind(this));
+        rootElement.addEventListener("touchstart", this.onTouchStart.bind(this));
+        rootElement.addEventListener("touchend", this.onTouchEnd.bind(this));
+        rootElement.addEventListener("touchmove", this.onTouchMove.bind(this));
+        window.addEventListener("gamepadconnected", this.onGamepadConnected.bind(this));
+        window.addEventListener("gamepaddisconnected", this.onGamepadDisconnected.bind(this));
+        for (const btn of [Button.up, Button.down, Button.left, Button.right, Button.action1, Button.action2, Button.cancel]) {
+            this.addButton(btn);
         }
     }
-    registerButton(btn) {
-        this.registeredButtons[btn.name] = btn;
+    onGamepadConnected(ev) {
+        console.log("Controller connected! Name: " + ev.gamepad.id);
+        this.controllers = navigator.getGamepads();
+        console.log(this.controllers);
+        console.log(ev);
+    }
+    onGamepadDisconnected(ev) {
+        console.log("Controller disconnected!");
+        this.controllers = navigator.getGamepads();
     }
     onKeyDown(ev) {
         this.pressedKeys.push(ev.code);
+        this.runRegisteredActions("down", ev.code);
     }
     onKeyUp(ev) {
         this.pressedKeys = this.pressedKeys.filter((code) => code != ev.code);
+        this.runRegisteredActions("up", ev.code);
     }
-    onMouseDown(ev) { }
-    onMouseUp(ev) { }
+    runRegisteredActions(ev, key) {
+        for (let i = 0; i < this.registeredButtons[ev].length; i++) {
+            if (this.registeredButtons[ev][i].btn.keybinds.includes(key)) {
+                this.registeredButtons[ev][i].action();
+            }
+        }
+    }
+    onMouseDown(ev) {
+        this.isMousePressed = true;
+        this.runRegisteredActions("down", "mouse");
+    }
+    onMouseUp(ev) {
+        this.isMousePressed = false;
+        this.runRegisteredActions("up", "mouse");
+    }
+    onMouseMove(ev) {
+        this.mousePos.x = Math.floor(ev.offsetX / this._screen.scale);
+        this.mousePos.y = Math.floor(ev.offsetY / this._screen.scale);
+    }
+    onTouchStart(ev) {
+        this.isMousePressed = true;
+        this.runRegisteredActions("down", "mouse");
+    }
+    onTouchEnd(ev) {
+        this.isMousePressed = false;
+        this.runRegisteredActions("up", "mouse");
+    }
+    onTouchMove(ev) {
+        ev.preventDefault();
+        this.mousePos.x = Math.floor(ev.touches[0].pageX / this._screen.scale);
+        this.mousePos.y = Math.floor(ev.touches[0].pageY / this._screen.scale);
+    }
+    on(btn, ev, action) {
+        if (typeof btn == "string") {
+            this.registeredButtons[ev].push({ btn: new Button(btn, [btn]), action });
+        }
+        else {
+            this.registeredButtons[ev].push({ btn, action });
+        }
+    }
+    addButton(btn) {
+        this.buttons[btn.name] = btn;
+    }
+    removeButton(btn) {
+        delete this.buttons[btn.name];
+    }
+    clearButtons() {
+        this.buttons = {};
+    }
     isButtonDown(btn) {
         if (typeof btn == "string") {
-            if (!this.registeredButtons[btn]) {
+            if (!this.buttons[btn]) {
                 console.warn("No button with this name registered: " + btn);
                 return false;
             }
-            btn = this.registeredButtons[btn];
+            btn = this.buttons[btn];
         }
         for (let i = 0; i < btn.keybinds.length; i++) {
             if (this.pressedKeys.includes(btn.keybinds[i]))
                 return true;
         }
+        if (btn.controllerBind != null && this.controllers.length > 0) {
+            this.controllers = navigator.getGamepads(); // need to call getGamepads to refresh list
+            for (let i = 0; i < this.controllers.length; i++) {
+                if (this.controllers[i].buttons[btn.controllerBind].pressed) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
     getAxis() {
         let axis = { v: 0, h: 0 };
+        if (this.controllers.length > 0) {
+            axis.h = navigator.getGamepads()[0].axes[0];
+            axis.v = navigator.getGamepads()[0].axes[1] * -1;
+            if (axis.h != 0 || axis.v != 0)
+                return axis;
+        }
         if (this.isButtonDown(Button.up))
             axis.v += 1;
         if (this.isButtonDown(Button.down))
@@ -210,6 +335,7 @@ class SpriteLib {
     }
     async load(url) {
         let img = new Image();
+        img.crossOrigin = "Anonymous";
         try {
             await new Promise((res, rej) => {
                 img.onload = res;
@@ -219,7 +345,7 @@ class SpriteLib {
         }
         catch {
             console.error("Couldn't load resource: " + url);
-            return { width: 1, height: 1, data: new Uint8ClampedArray([255, 0, 255, 255]) };
+            return new ImageData(new Uint8ClampedArray([255, 0, 255, 255]), 1, 1);
         }
         return this.loadSync(img);
     }
@@ -240,9 +366,22 @@ class SpriteLib {
                     part.push(sprite.data[ndx], sprite.data[ndx + 1], sprite.data[ndx + 2], sprite.data[ndx + 3]);
                 }
             }
-            sprites.push({ data: new Uint8ClampedArray(part), width, height });
+            sprites.push(new ImageData(new Uint8ClampedArray(part), width, height));
         }
         return sprites;
+    }
+    filpH(sprite) {
+        //TODO: Not working fix please :)
+        this.canvas.width = sprite.width;
+        this.canvas.height = sprite.height;
+        let ctx = this.canvas.getContext("2d");
+        ctx.putImageData(sprite, 0, 0);
+        let img = new Image();
+        img.src = this.canvas.toDataURL("image/png");
+        ctx.scale(-1, 1);
+        ctx.drawImage(img, 0, 0);
+        let flippedSprite = ctx.getImageData(0, 0, sprite.width, sprite.height);
+        return flippedSprite;
     }
 }
 var spritelib = new SpriteLib();
@@ -252,6 +391,12 @@ class DrawLib {
     fontMap = {};
     constructor(screen) {
         this.screen = screen;
+    }
+    _cameraOffsetX = 0;
+    _cameraOffsetY = 0;
+    setOffset(x, y) {
+        this._cameraOffsetX = x;
+        this._cameraOffsetY = y;
     }
     async loadFont(url, characters, charWidth) {
         let data;
@@ -273,12 +418,12 @@ class DrawLib {
         console.log(this.fontMap);
     }
     pixel(x, y, c) {
-        this.screen.setPixel(x, y, c.r, c.g, c.b);
+        this.screen.setPixel(x + this._cameraOffsetX, y + this._cameraOffsetY, c.r, c.g, c.b);
     }
     rect(x, y, w, h, c) {
         for (let i = 0; i < w; i++) {
             for (let j = 0; j < h; j++) {
-                this.screen.setPixel(i + x, j + y, c.r, c.g, c.b);
+                this.screen.setPixel(i + x + this._cameraOffsetX, j + y + this._cameraOffsetY, c.r, c.g, c.b);
             }
         }
     }
@@ -287,6 +432,8 @@ class DrawLib {
             console.warn("Sprite not ready! skipping draw");
             return;
         }
+        x += this._cameraOffsetX;
+        y += this._cameraOffsetY;
         for (let i = 0, px = 0, py = 0; i < sprite.data.length; i += 4, px++) {
             if (px >= sprite.width) {
                 px = 0;
@@ -303,6 +450,8 @@ class DrawLib {
             return;
         }
         scale = Math.round(scale);
+        x += this._cameraOffsetX;
+        y += this._cameraOffsetY;
         let i, px, py, dx, dy;
         for (i = 0, px = 0, py = 0; i < sprite.data.length; i += 4, px += scale) {
             if (px >= sprite.width * scale) {
@@ -323,6 +472,8 @@ class DrawLib {
     }
     text(x, y, text, c, scale = 1, leftMargin = 1) {
         text = text.toUpperCase();
+        x += this._cameraOffsetX;
+        y += this._cameraOffsetY;
         for (let i = 0, char; i < text.length; i++) {
             if (text[i] == " ")
                 continue;
@@ -343,6 +494,30 @@ class DrawLib {
                 sum += (this.fontMap[text[i]].width + leftMargin) * scale;
         }
         return sum;
+    }
+    fragment(x, y, sprite, calc, scale = 1) {
+        if (!sprite) {
+            console.warn("Sprite not ready! skipping draw");
+            return;
+        }
+        scale = Math.round(scale);
+        x += this._cameraOffsetX;
+        y += this._cameraOffsetY;
+        let i, px, py, dx, dy;
+        for (i = 0, px = 0, py = 0; i < sprite.data.length; i += 4, px += scale) {
+            if (px >= sprite.width * scale) {
+                px = 0;
+                py += scale;
+            }
+            if (sprite.data[i + 3] > 0) {
+                for (dx = 0; dx < scale; dx++) {
+                    for (dy = 0; dy < scale; dy++) {
+                        let color = calc(this.screen.pixelBuffer, (this.screen.width * (py + dy + y) + (px + dx + x)) * 3);
+                        this.screen.setPixel(px + dx + x, py + dy + y, color.r, color.g, color.b);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -378,6 +553,11 @@ class Color {
     r;
     g;
     b;
+    /**
+     * @param r red (0-255)
+     * @param g green (0-255)
+     * @param b blue (0-255)
+     */
     constructor(r, g, b) {
         this.r = r;
         this.g = g;
@@ -385,6 +565,9 @@ class Color {
     }
 }
 
+/**
+ * A pseudorandom number generator using the Wichman-Hill algorithm
+ */
 class Random {
     seed;
     a;
@@ -404,14 +587,41 @@ class Random {
         this.c = (170 * this.c) % 30323;
         return (this.a / 30269 + this.b / 30307 + this.c / 30323) % 1;
     }
+    /**
+     * @param min inclusive minimum
+     * @param max exclusive maximum
+     */
     between(min, max) {
         return this.next() * (max - min) + min;
     }
+    /**
+     * @param min inclusive minimum
+     * @param max exclusive maximum
+     */
     betweenInt(min, max) {
         return Math.round(this.next() * (max - min) + min);
     }
+    /**
+     * Generates a random number using JS random
+     * @param min inclusive minimum
+     * @param max exclusive maximum
+     */
+    seedlessBetween(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+    /**
+     * Generates a random integer using JS random
+     * @param min inclusive minimum
+     * @param max exclusive maximum
+     */
+    seedlessBetweenInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min)) + min;
+    }
 }
 
+const sideNames = ["top", "right", "bottom", "left"];
 class PhysicLib {
     monitoredCollisions = [];
     constructor() { }
@@ -420,6 +630,21 @@ class PhysicLib {
     }
     isCollision(x1, y1, w1, h1, x2, y2, w2, h2) {
         return !(x1 + w1 <= x2 || x2 + w2 <= x1 || y1 + h1 <= y2 || y2 + h2 <= y1);
+    }
+    getCollisionInfo(x1, y1, w1, h1, x2, y2, w2, h2) {
+        var sides = [y1 + h1 - y2, x2 + w2 - x1, y2 + h2 - y1, x1 + w1 - x2];
+        let nearestSide = 0;
+        for (let i = 0; i < 4; i++)
+            if (sides[i] < sides[nearestSide])
+                nearestSide = i;
+        return {
+            top: sides[0],
+            right: sides[1],
+            bottom: sides[2],
+            left: sides[3],
+            nearestSide: nearestSide,
+            nearestSideName: sideNames[nearestSide],
+        };
     }
     watch(rect1, rect2, action) {
         this.monitoredCollisions.push({ a: rect1, b: rect2, action });
@@ -439,14 +664,16 @@ class PhysicLib {
 }
 
 class Engine {
-    isCursorVisible = false;
     _activeScene = new Scene();
-    lastFrame = false;
+    _lastFrame = false;
+    _cursor = { x: 0, y: 0, scale: 1 };
+    _camera = { x: 0, y: 0 };
     screen;
     draw;
     input;
     random;
     physic;
+    drawCursor = false;
     showInfo = false;
     autoScale = false;
     clearColor = Color.black;
@@ -462,24 +689,47 @@ class Engine {
     }
     constructor() {
         this._activeScene.apateInstance = this;
-        this.random = new Random();
         this.screen = new Screen();
         this.screen.scale = this.screen.maxScale;
         this.draw = new DrawLib(this.screen);
-        this.input = new Input(this.screen.canvas);
+        this.input = new Input(this.screen.canvas, this.screen);
+        this.random = new Random();
         this.physic = new PhysicLib();
-        this.draw.loadFont("/res/default_text.png", "ABCDEFGHIJKLMNOPQRSTUVWXYZ.!?:+-*/=()0123456789", 4);
+        this.draw.loadFont("https://raw.githubusercontent.com/juiian7/ApateJS-Retro/4d178bfea79a0ef601130d7d0c6a69c473e7e1ae/res/default_text.png", "ABCDEFGHIJKLMNOPQRSTUVWXYZ.!?:+-*/=()0123456789", 4);
+        this.screen.canvas.style.cursor = "none";
         document.body.append(this.screen.canvas);
-        window.addEventListener('resize', this.onWindowResize.bind(this));
+        window.addEventListener("resize", this.onWindowResize.bind(this));
+        this.loadCursor("https://raw.githubusercontent.com/juiian7/ApateJS-Retro/7ff7976ef459c20d3df18275aac089364e2aa731/res/default_cursor.png");
+    }
+    async loadCursor(url, point, scale = 1) {
+        this._cursor = {
+            img: await spritelib.load(url),
+            x: point?.x ?? 0,
+            y: point?.y ?? 0,
+            scale,
+        };
+    }
+    async loadCursorSync(img, point, scale = 1) {
+        this._cursor = {
+            img: spritelib.loadSync(img),
+            x: point?.x ?? 0,
+            y: point?.y ?? 0,
+            scale,
+        };
     }
     run() {
-        this.lastFrame = false;
+        this._lastFrame = false;
         var lastTime = new Date().getTime();
         var time = 0;
         var delta = 0;
         var nextSecond = 100;
         var lastFrames = 0;
         var frameCounter = 0;
+        var tmp = 0;
+        var calcCursorColor = (pixels, ndx) => {
+            tmp = 255 - (pixels[ndx] + pixels[ndx + 1] + pixels[ndx + 2]) / 3;
+            return { r: tmp, g: tmp, b: tmp };
+        };
         var loop = () => {
             time = new Date().getTime();
             delta = time - lastTime;
@@ -489,18 +739,29 @@ class Engine {
                 lastFrames = frameCounter;
                 frameCounter = 0;
             }
+            if (delta > 400) {
+                console.info("Skipping frame");
+                window.requestAnimationFrame(loop);
+                lastTime = time;
+                return;
+            }
             this.screen.clear(this.clearColor.r, this.clearColor.g, this.clearColor.b);
+            this.draw.setOffset(this._camera.x, this._camera.y);
             // update
             this._activeScene.update(delta);
             this.physic.checkAllCollisions();
             // draw
             this._activeScene.draw(this.draw);
+            this.draw.setOffset(0, 0);
             if (this.showInfo)
                 this.draw.text(1, 1, "FPS:" + lastFrames, Color.white);
+            if (this.drawCursor) {
+                this.draw.fragment(this.input.mousePos.x, this.input.mousePos.y, this._cursor.img, calcCursorColor, this._cursor.scale);
+            }
             this.screen.updateScreen();
             lastTime = time;
             frameCounter++;
-            if (!this.lastFrame)
+            if (!this._lastFrame)
                 window.requestAnimationFrame(loop);
         };
         window.requestAnimationFrame(loop);
@@ -508,8 +769,12 @@ class Engine {
     clear() {
         this.screen.clear(this.clearColor.r, this.clearColor.g, this.clearColor.b);
     }
+    camera(x, y) {
+        this._camera.x = x * -1;
+        this._camera.y = y;
+    }
     stop() {
-        this.lastFrame = true;
+        this._lastFrame = true;
     }
     resize(width, height) {
         this.screen.resize(width, height);
@@ -581,6 +846,8 @@ class Particle {
     sprite;
     velX = 0;
     velY = 0;
+    gravityX = 0;
+    gravityY = 0;
     scale = 1;
     lifetime = Infinity;
     constructor(particle) {
@@ -625,6 +892,8 @@ class ParticleSystem extends Entity {
                 i--;
                 continue;
             }
+            this.particles[i].velX += this.particles[i].gravityX * delta * 0.0001;
+            this.particles[i].velY += this.particles[i].gravityY * delta * 0.0001;
             if (this.applyDelta) {
                 this.particles[i].x += this.particles[i].velX * delta * 0.05;
                 this.particles[i].y += this.particles[i].velY * delta * 0.05;
@@ -638,14 +907,18 @@ class ParticleSystem extends Entity {
     }
     draw(draw) {
         for (let i = 0; i < this.particles.length; i++) {
-            if (this.particles[i].sprite && this.particles[i].color)
+            if (this.particles[i].sprite && this.particles[i].color) {
                 draw.spriteExt(Math.round(this.particles[i].x), Math.round(this.particles[i].y), this.particles[i].sprite, 1, this.particles[i].color);
-            else if (this.particles[i].sprite)
+            }
+            else if (this.particles[i].sprite) {
                 draw.sprite(Math.round(this.particles[i].x), Math.round(this.particles[i].y), this.particles[i].sprite);
-            else if (this.particles[i].color)
+            }
+            else if (this.particles[i].color) {
                 draw.pixel(Math.round(this.particles[i].x), Math.round(this.particles[i].y), this.particles[i].color);
-            else
+            }
+            else {
                 draw.pixel(Math.round(this.particles[i].x), Math.round(this.particles[i].y), Color.magenta);
+            }
         }
     }
     kill(particle) {
@@ -663,4 +936,51 @@ class ParticleSystem extends Entity {
     destroy() { }
 }
 
-export { Engine as Apate, Button, Color, Entity, Particle, ParticleSystem, Random, Scene, spritelib };
+class Transition extends Entity {
+    index = 0;
+    type;
+    duration = 200;
+    progress = 0;
+    constructor(duration) {
+        super();
+        this.duration = duration;
+    }
+    done() { }
+    update(delta) {
+        if (this.index < 0)
+            return;
+        this.index -= delta;
+        this.progress = this.index / this.duration;
+        if (this.type == "start")
+            this.progress = 1 - this.progress;
+        if (this.index < 0)
+            this.done();
+    }
+    do(type) {
+        return new Promise((res, rej) => {
+            this.index = this.duration;
+            this.type = type;
+            this.done = res;
+        });
+    }
+}
+
+class ColorLib {
+    constructor() { }
+    componentToHex(c) {
+        let hex = c.toString(16);
+        return hex.length == 1 ? "0" + hex : hex;
+    }
+    hexToColor(hex) {
+        let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        if (!result)
+            return null;
+        return { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) };
+    }
+    colorToHex(color) {
+        return "#" + this.componentToHex(color.r) + this.componentToHex(color.g) + this.componentToHex(color.b);
+    }
+}
+var colorlib = new ColorLib();
+
+export { Engine as Apate, Button, Color, DrawLib, Entity, Input, Particle, ParticleSystem, PhysicLib, Random, Scene, Transition, colorlib, spritelib };

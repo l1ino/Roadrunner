@@ -1,4 +1,4 @@
-import { Color } from "../utils/Color.js";
+import { Color } from "../utils/color.js";
 import { Entity } from "./Entity.js";
 export class Particle {
     x = 0;
@@ -7,6 +7,8 @@ export class Particle {
     sprite;
     velX = 0;
     velY = 0;
+    gravityX = 0;
+    gravityY = 0;
     scale = 1;
     lifetime = Infinity;
     constructor(particle) {
@@ -51,6 +53,8 @@ export class ParticleSystem extends Entity {
                 i--;
                 continue;
             }
+            this.particles[i].velX += this.particles[i].gravityX * delta * 0.0001;
+            this.particles[i].velY += this.particles[i].gravityY * delta * 0.0001;
             if (this.applyDelta) {
                 this.particles[i].x += this.particles[i].velX * delta * 0.05;
                 this.particles[i].y += this.particles[i].velY * delta * 0.05;
@@ -64,14 +68,18 @@ export class ParticleSystem extends Entity {
     }
     draw(draw) {
         for (let i = 0; i < this.particles.length; i++) {
-            if (this.particles[i].sprite && this.particles[i].color)
+            if (this.particles[i].sprite && this.particles[i].color) {
                 draw.spriteExt(Math.round(this.particles[i].x), Math.round(this.particles[i].y), this.particles[i].sprite, 1, this.particles[i].color);
-            else if (this.particles[i].sprite)
+            }
+            else if (this.particles[i].sprite) {
                 draw.sprite(Math.round(this.particles[i].x), Math.round(this.particles[i].y), this.particles[i].sprite);
-            else if (this.particles[i].color)
+            }
+            else if (this.particles[i].color) {
                 draw.pixel(Math.round(this.particles[i].x), Math.round(this.particles[i].y), this.particles[i].color);
-            else
+            }
+            else {
                 draw.pixel(Math.round(this.particles[i].x), Math.round(this.particles[i].y), Color.magenta);
+            }
         }
     }
     kill(particle) {

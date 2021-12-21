@@ -5,21 +5,27 @@ declare class PixelScreen {
     resize(w: any, h: any): void;
     get pixel(): Uint8Array;
 }
+declare type Color_M = {
+    r: number;
+    g: number;
+    b: number;
+};
+export declare function color(r: any, g: any, b: any): Color;
 declare class Screen {
     pixelScreen: PixelScreen;
     _apate: Apate_M;
     constructor(apate: Apate_M);
-    drawPixel(x: any, y: any, c: any): void;
-    drawRect(x: any, y: any, w: any, h: any, c: any): void;
-    drawSprite(x: any, y: any, spriteObj: any, scale: any): void;
-    drawText(x: any, y: any, text: any, c: any, options: any): void;
+    drawPixel(x: number, y: number, c: Color_M): void;
+    drawRect(x: number, y: number, w: number, h: number, c: Color_M): void;
+    drawSprite(x: number, y: number, spriteObj: any, scale: number): void;
+    drawText(x: number, y: number, text: string, c: Color_M, options: any): void;
 }
 declare class Apate_M extends Engine {
     constructor();
     get screen_O(): import("./core/Screen.js").Screen;
 }
 export default class Apate {
-    public _apate: Engine;
+    private _apate;
     screen: Screen;
     private _activeScene;
     get random(): Random;
@@ -39,15 +45,15 @@ export default class Apate {
     constructor();
     autoPauseOnLeave: boolean;
     setParentElement(el: HTMLElement): void;
+    set autoScale(val: any);
     set clearColor(val: Color);
     get clearColor(): Color;
     on(ev: any, fun: any): void;
     run(): void;
     isButtonPressed(name: any): boolean;
-    loadObjFromBrowser(name: any): {};
-    saveObjToBrowser(name: any, obj: any): void;
+    loadObjFromBrowser(name: string): string;
+    saveObjToBrowser(name: string, obj: any): void;
 }
-export declare function color(r: any, g: any, b: any): Color;
 declare class Scene_M extends Scene_O {
     constructor();
     get entities_O(): Entity_O[];

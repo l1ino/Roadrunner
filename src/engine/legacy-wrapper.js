@@ -12,6 +12,9 @@ class PixelScreen {
         return this._apate.screen_O.pixelBuffer;
     }
 }
+export function color(r, g, b) {
+    return new Color(r, g, b);
+}
 class Screen {
     pixelScreen;
     _apate;
@@ -29,9 +32,9 @@ class Screen {
         this._apate.draw.spriteExt(Math.round(x), Math.round(y), spriteObj, scale, null);
     }
     drawText(x, y, text, c, options) {
-        let lines = text.split('\n');
+        let lines = text.split("\n");
         for (let i = 0; i < lines.length; i++) {
-            this._apate.draw.text(Math.round(x), Math.round(y + ( i * (5 + (options?.topSpace ?? 1))) ), lines[i], c, Math.round(options?.scale ?? 1));            
+            this._apate.draw.text(Math.round(x), Math.round(y + i * (5 + (options?.topSpace ?? 1))), lines[i], c, Math.round(options?.scale ?? 1));
         }
     }
 }
@@ -66,12 +69,12 @@ export default class Apate {
         this.activeScene = new Scene();
         this.autoScale = true;
     }
-    set autoScale(val) {
-        this._apate.autoScale = val;
-    }
     autoPauseOnLeave = true;
     setParentElement(el) {
         el.append(this._apate.htmlElement);
+    }
+    set autoScale(val) {
+        this._apate.autoScale = val;
     }
     set clearColor(val) {
         this._apate.clearColor = val;
@@ -121,10 +124,9 @@ export default class Apate {
     loadObjFromBrowser(name) {
         return window.localStorage.getItem(name);
     }
-    saveObjToBrowser(name, obj) { window.localStorage.setItem(name, obj); }
-}
-export function color(r, g, b) {
-    return new Color(r, g, b);
+    saveObjToBrowser(name, obj) {
+        window.localStorage.setItem(name, obj);
+    }
 }
 class Scene_M extends Scene_O {
     constructor() {
@@ -199,6 +201,8 @@ export class ParticleSystem {
                 x: random.betweenInt(properties.origin.x, properties.origin.x + properties.origin.w),
                 y: random.betweenInt(properties.origin.y, properties.origin.y + properties.origin.h),
                 color: new Color(properties.colors[0].r, properties.colors[0].g, properties.colors[0].b) ?? Color.magenta,
+                gravityX: properties.gravity.x ?? 0,
+                gravityY: properties.gravity.y ?? 0,
             };
         };
     }

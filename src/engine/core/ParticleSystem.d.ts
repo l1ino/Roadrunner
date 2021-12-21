@@ -1,4 +1,4 @@
-import { Color } from "../utils/Color.js";
+import { Color } from "../utils/color.js";
 import type { DrawLib } from "../utils/drawlib.js";
 import { Entity } from "./Entity.js";
 declare type Sprite = ImageData;
@@ -9,6 +9,8 @@ export declare class Particle {
     sprite?: Sprite;
     velX: number;
     velY: number;
+    gravityX: number;
+    gravityY: number;
     scale: number;
     lifetime: number;
     constructor(particle?: Particle);

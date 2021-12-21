@@ -5,6 +5,12 @@ export class Screen {
     textureWidth = 128;
     textureHeight = 128;
     pixelBuffer;
+    get width() {
+        return this.textureWidth;
+    }
+    get height() {
+        return this.textureHeight;
+    }
     constructor() {
         this.canvas = document.createElement("canvas");
         this.canvas.width = this.textureWidth;
@@ -71,7 +77,6 @@ export class Screen {
         this.textureWidth = textureWidth;
         this.textureHeight = textureHeight;
         this.pixelBuffer = new Uint8Array(this.textureWidth * this.textureHeight * 3);
-
         this.scale = this.scale;
     }
     set scale(value) {
@@ -86,10 +91,8 @@ export class Screen {
         let canvasRect = this.canvas.getBoundingClientRect();
         let windowsWidth = window.innerWidth - canvasRect.left;
         let windowsHeight = window.innerHeight - canvasRect.top;
-        let screenWidth = this.textureWidth;
-        let screenHeight = this.textureHeight;
-        let scaleWidth = Math.floor((windowsWidth / screenWidth));
-        let scaleHeight = Math.floor((windowsHeight / screenHeight));
+        let scaleWidth = Math.floor(windowsWidth / this.textureWidth);
+        let scaleHeight = Math.floor(windowsHeight / this.textureHeight);
         return Math.min(scaleWidth, scaleHeight);
     }
 }

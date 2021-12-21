@@ -4,6 +4,8 @@ export declare class Screen {
     private textureWidth;
     private textureHeight;
     pixelBuffer: Uint8Array;
+    get width(): number;
+    get height(): number;
     constructor();
     private initGL;
     updateScreen(): void;

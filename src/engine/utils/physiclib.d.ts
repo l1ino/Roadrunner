@@ -14,6 +14,14 @@ export declare class PhysicLib {
     constructor();
     isCollisionRect(rect1: Rect, rect2: Rect): boolean;
     isCollision(x1: any, y1: any, w1: any, h1: any, x2: any, y2: any, w2: any, h2: any): boolean;
+    getCollisionInfo(x1: any, y1: any, w1: any, h1: any, x2: any, y2: any, w2: any, h2: any): {
+        top: number;
+        right: number;
+        bottom: number;
+        left: number;
+        nearestSide: number;
+        nearestSideName: string;
+    };
     watch(rect1: Rect, rect2: Rect, action: Function): CollisionCheckModel;
     drop(ccm: CollisionCheckModel): void;
     checkAllCollisions(): void;

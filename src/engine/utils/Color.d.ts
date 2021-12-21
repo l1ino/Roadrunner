@@ -30,5 +30,10 @@ export declare class Color {
     r: number;
     g: number;
     b: number;
+    /**
+     * @param r red (0-255)
+     * @param g green (0-255)
+     * @param b blue (0-255)
+     */
     constructor(r: number, g: number, b: number);
 }
