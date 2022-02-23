@@ -1,4 +1,4 @@
-import Apate, { Entity } from '../engine/apate-mini.js';
+import Apate, { Entity } from '../engine/legacy-wrapper.js';
 import Background from './background.js';
 import CarMgr from './carMgr.js';
 import Player from './player.js';
@@ -86,7 +86,7 @@ class Game extends Entity {
                 this.apate.screen.drawText(2, 2, `Gamespeed: ${Math.round(this.gameSpeed * 100)}`, this.apate.colors.white);
             }
         } else if (this.isFirstLoad) {
-            this.apate.screen.drawText(46, 48, 'Press Space to start', this.apate.colors.black, { scale: 1.5, leftSpace: 3 });
+            this.apate.screen.drawText(32, 48, 'Press Space to start', this.apate.colors.black, { scale: 1.5, leftSpace: 3 });
             if (this.apate.isButtonPressed('up')) {
                 this.start();
             }

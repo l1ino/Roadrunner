@@ -1,7 +1,8 @@
-import Apate, { color } from './engine/apate-mini.js';
+import { Button } from './engine/apate.js';
+import Apate, { color } from './engine/legacy-wrapper.js';
 import game from './scripts/game.js';
 
-var apate = new Apate();
+const apate = new Apate();
 
 apate.autoPauseOnLeave = false;
 apate.setParentElement(document.querySelector('#screen'));
@@ -33,7 +34,7 @@ apate.activeScene.init(game.entities.background);
 apate.run();
 
 // additional controls
-apate.keyMap.up.push('Space');
+apate._apate.input.addButton(new Button('up', ['Space', 'KeyW', 'ArrowUp']));
 document.body.addEventListener('touchstart', () => {
     if (game.isAlive) {
         game.entities.player.jump();
