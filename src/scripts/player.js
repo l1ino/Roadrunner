@@ -1,4 +1,5 @@
-import Apate, { Entity, spriteMgr } from '../engine/legacy-wrapper.js';
+import { Apate, Entity } from '../engine/apate.js';
+import { spriteMgr } from '../engine/legacy-wrapper.js';
 import game from './game.js';
 
 const playerImgElement = document.querySelector('#player');

@@ -1,4 +1,4 @@
-import Apate, { Entity } from '../engine/legacy-wrapper.js';
+import { Apate, Entity } from '../engine/apate.js';
 import Background from './background.js';
 import CarMgr from './carMgr.js';
 import Player from './player.js';
@@ -79,22 +79,22 @@ class Game extends Entity {
         if (this.isAlive) {
             let text = `Score: ${Math.floor(this.score)}`;
             let textpixelwidth = (text.length * 4 + 3) * 2;
-            this.apate.screen.drawText(256 / 2 - textpixelwidth / 2, 10, text, this.apate.colors.white, { scale: 2, leftSpace: 3 });
+            this.apate.draw.text(256 / 2 - textpixelwidth / 2, 10, text, this.apate.colors.white, { scale: 2, leftSpace: 3 });
 
             if (this.debugMode) {
-                this.apate.screen.drawText(2, 10, `Daytimemix: ${this.dayTimeColorMix.toFixed(2)}`, this.apate.colors.white);
-                this.apate.screen.drawText(2, 2, `Gamespeed: ${Math.round(this.gameSpeed * 100)}`, this.apate.colors.white);
+                this.apate.draw.text(2, 10, `Daytimemix: ${this.dayTimeColorMix.toFixed(2)}`, this.apate.colors.white);
+                this.apate.draw.text(2, 2, `Gamespeed: ${Math.round(this.gameSpeed * 100)}`, this.apate.colors.white);
             }
         } else if (this.isFirstLoad) {
-            this.apate.screen.drawText(32, 48, 'Press Space to start', this.apate.colors.black, { scale: 1.5, leftSpace: 3 });
+            this.apate.draw.text(32, 48, 'Press Space to start', this.apate.colors.black, { scale: 1.5, leftSpace: 3 });
             if (this.apate.isButtonPressed('up')) {
                 this.start();
             }
         } else {
             let color = this.isNight ? this.apate.colors.white : this.apate.colors.black;
-            this.apate.screen.drawText(80, 19, 'Game Over', color, { scale: 2, leftSpace: 3 });
-            this.apate.screen.drawText(95, 49, `Score: ${this.score}\nHighscore: ${this.highscore}`, color, { topSpace: 4 });
-            this.apate.screen.drawText(95, 75, 'Restart (Space)', color);
+            this.apate.draw.text(80, 19, 'Game Over', color, { scale: 2, leftSpace: 3 });
+            this.apate.draw.text(95, 49, `Score: ${this.score}\nHighscore: ${this.highscore}`, color, { topSpace: 4 });
+            this.apate.draw.text(95, 75, 'Restart (Space)', color);
         }
     }
 
@@ -122,7 +122,7 @@ class Game extends Entity {
                 }
             }
         } else {
-            if (this.apate.isButtonPressed('Action1') || this.apate.isButtonPressed('Action2')) {
+            if (this.apate?.input.isButtonDown('Action1') || this.apate?.input.isButtonDown('Action2')) {
                 this.restart();
             }
         }

@@ -1,12 +1,13 @@
-import Apate, { Entity, color, ParticleSystem } from '../engine/legacy-wrapper.js';
+import { Apate, Color, Entity } from '../engine/apate.js';
+import { ParticleSystem } from '../engine/legacy-wrapper.js';
 import game from './game.js';
 
 const skyStepSize = 128 / 8;
 const skyStepHeight = Math.round(128 / skyStepSize);
-const skyDayColor1 = color(255, 64, 0);
-const skyDayColor2 = color(255, 255, 0);
-const skyNightColor1 = color(0, 0, 85);
-const skyNightColor2 = color(90, 0, 85);
+const skyDayColor1 = new Color(255, 64, 0);
+const skyDayColor2 = new Color(255, 255, 0);
+const skyNightColor1 = new Color(0, 0, 85);
+const skyNightColor2 = new Color(90, 0, 85);
 
 const skyFallOfDay_red = (skyDayColor1.r - skyDayColor2.r) / skyStepSize;
 const skyFallOfDay_green = (skyDayColor1.g - skyDayColor2.g) / skyStepSize;
@@ -28,7 +29,7 @@ export default class Background extends Entity {
             origin: { x: 60, y: 0, w: 200, h: 30 },
             velocity: { x: -15 },
             emitDelay: 400,
-            colors: [color(255, 218, 42)],
+            colors: [new Color(255, 218, 42)],
             lifetime: 5000
         });
         this.stars.start();
