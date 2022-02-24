@@ -1,20 +1,19 @@
-import { Apate, Entity } from '../engine/apate.js';
-import { spriteMgr } from '../engine/legacy-wrapper.js';
+import { Apate, Button, DrawLib, Entity, spritelib } from '../engine/apate.js';
 import game from './game.js';
 
 const playerImgElement = document.querySelector('#player');
-const playerSprites = spriteMgr.imgToSprite(playerImgElement);
-
-const playerMainSprite = spriteMgr.subSprite(playerSprites, 0, 0, 16, 16);
-const playerDeathSprite = spriteMgr.subSprite(playerSprites, 32, 64, 16, 16);
-
-const playerAnimationSprites = (function () {
-    let sprites = [];
-    for (let i = 0; i < 8; i++) {
-        sprites.push(spriteMgr.subSprite(playerSprites, 16 * i, 16, 16, 16));
-    }
-    return sprites;
-})();
+const playerSprites = spritelib.loadSync(playerImgElement);
+const playerSpriteMap = {
+    main: spritelib.split(playerSprites, 16, 16, 0)[0],
+    death: spritelib.split(playerSprites, 16, 16, 64)[3],
+    animation: (function () {
+        let sprites = [];
+        for (let i = 0; i < 8; i++) {
+            sprites.push(spritelib.split(playerSprites, 16, 16, 16)[i]);
+        }
+        return sprites;
+    })()
+};
 
 export default class Player extends Entity {
     /** @param {Apate} apate */
@@ -49,13 +48,16 @@ export default class Player extends Entity {
         this.currentAnimationFrame = 0;
     }
 
-    draw() {
+    /**
+     * @param {DrawLib} drawlib
+     */
+    draw(drawlib) {
         if (game.isAlive) {
-            this.apate.screen.drawSprite(Math.floor(this.posX), Math.floor(this.posY), playerAnimationSprites[this.currentAnimationFrame], 2);
+            drawlib.spriteExt(Math.floor(this.posX), Math.floor(this.posY), playerSpriteMap.animation[this.currentAnimationFrame], 2);
         } else if (game.isFirstLoad) {
-            this.apate.screen.drawSprite(Math.floor(this.posX), Math.floor(this.posY), playerMainSprite, 2);
+            drawlib.spriteExt(Math.floor(this.posX), Math.floor(this.posY), playerSpriteMap.main, 2);
         } else {
-            this.apate.screen.drawSprite(Math.floor(this.posX), Math.floor(this.posY), playerDeathSprite, 2);
+            drawlib.spriteExt(Math.floor(this.posX), Math.floor(this.posY), playerSpriteMap.death, 2);
         }
     }
 
@@ -70,11 +72,11 @@ export default class Player extends Entity {
             this.nextAnimationFrame = 1000 / this.animantionFPS;
         }
 
-        if (this.apate.isButtonPressed('up') && !this.apate.isButtonPressed('down')) {
+        if (this.apate.input.isButtonDown(Button.up) && !this.apate.input.isButtonDown(Button.down)) {
             this.jump();
         }
 
-        this.mass = this.apate.isButtonPressed('down') ? 1.7 : 1;
+        this.mass = this.apate.input.isButtonDown(Button.down) ? 1.7 : 1;
 
         this.physicsUpdate(delta);
     }

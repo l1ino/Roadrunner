@@ -1,4 +1,4 @@
-import { Apate, Entity } from '../engine/apate.js';
+import { Apate, Button, Color, DrawLib, Entity } from '../engine/apate.js';
 import Background from './background.js';
 import CarMgr from './carMgr.js';
 import Player from './player.js';
@@ -29,8 +29,9 @@ class Game extends Entity {
     /**
      * @param {Apate} apate
      */
-    init(apate) {
+    setApate(apate) {
         this.apate = apate;
+        console.log(apate);
         this.entities = {
             road: new Road(apate),
             player: new Player(apate),
@@ -67,9 +68,12 @@ class Game extends Entity {
         this.apate.save();
     }
 
-    draw() {
+    /**
+     * @param {DrawLib} drawlib 
+     */
+     draw(drawlib) {
         if (this.isNight) {
-            let pixels = this.apate.screen.pixelScreen.pixel;
+            let pixels = this.apate.screen.pixelBuffer;
             let screenDarkerMix = Math.floor(screenDarkerChange * (this.dayTimeColorMix / 100));
             for (let i = 0; i < pixels.length; i++) {
                 pixels[i] = pixels[i] - screenDarkerMix < 0 ? 0 : pixels[i] - screenDarkerMix;
@@ -79,22 +83,22 @@ class Game extends Entity {
         if (this.isAlive) {
             let text = `Score: ${Math.floor(this.score)}`;
             let textpixelwidth = (text.length * 4 + 3) * 2;
-            this.apate.draw.text(256 / 2 - textpixelwidth / 2, 10, text, this.apate.colors.white, { scale: 2, leftSpace: 3 });
+            drawlib.text(256 / 2 - textpixelwidth / 2, 10, text, Color.white, { scale: 2, leftSpace: 3 });
 
             if (this.debugMode) {
-                this.apate.draw.text(2, 10, `Daytimemix: ${this.dayTimeColorMix.toFixed(2)}`, this.apate.colors.white);
-                this.apate.draw.text(2, 2, `Gamespeed: ${Math.round(this.gameSpeed * 100)}`, this.apate.colors.white);
+                drawlib.text(2, 10, `Daytimemix: ${this.dayTimeColorMix.toFixed(2)}`, Color.white);
+                drawlib.text(2, 2, `Gamespeed: ${Math.round(this.gameSpeed * 100)}`, Color.white);
             }
         } else if (this.isFirstLoad) {
-            this.apate.draw.text(32, 48, 'Press Space to start', this.apate.colors.black, { scale: 1.5, leftSpace: 3 });
-            if (this.apate.isButtonPressed('up')) {
+            drawlib.text(32, 48, 'Press Space to start', Color.black, { scale: 1.5, leftSpace: 3 });
+            if (this.apate.input.isButtonDown(Button.up)) {
                 this.start();
             }
         } else {
-            let color = this.isNight ? this.apate.colors.white : this.apate.colors.black;
-            this.apate.draw.text(80, 19, 'Game Over', color, { scale: 2, leftSpace: 3 });
-            this.apate.draw.text(95, 49, `Score: ${this.score}\nHighscore: ${this.highscore}`, color, { topSpace: 4 });
-            this.apate.draw.text(95, 75, 'Restart (Space)', color);
+            let color = this.isNight ? Color.white : Color.black;
+            drawlib.text(80, 19, 'Game Over', color, 2, 3);
+            drawlib.text(95, 20, `Score: ${this.score}\nHighscore: ${this.highscore}`, color, 2);
+            drawlib.text(95, 75, 'Restart (Space)', color);
         }
     }
 
@@ -122,7 +126,7 @@ class Game extends Entity {
                 }
             }
         } else {
-            if (this.apate?.input.isButtonDown('Action1') || this.apate?.input.isButtonDown('Action2')) {
+            if (this.apate.input.isButtonDown(Button.action1) || this.apate.input.isButtonDown(Button.action2)) {
                 this.restart();
             }
         }

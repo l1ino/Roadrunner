@@ -1,5 +1,4 @@
-import { Apate, Entity } from '../engine/apate.js';
-import { spriteMgr } from '../engine/legacy-wrapper.js';
+import { Apate, DrawLib, Entity, spritelib } from '../engine/apate.js';
 import game from './game.js';
 
 const carImages = document.getElementsByClassName('carImg');
@@ -7,7 +6,7 @@ const carSprites = (function () {
     let sprites = [];
     for (const img of carImages) {
         sprites.push({
-            image: spriteMgr.imgToSprite(img),
+            image: spritelib.loadSync(img),
             imgHeight: img.height,
             imgWidth: img.width
         });
@@ -33,10 +32,13 @@ export default class CarMgr extends Entity {
         this.nextSpawn = 0;
     }
 
-    draw() {
+    /**
+     * @param {DrawLib} drawlib
+     */
+    draw(drawlib) {
         for (let i = 0; i < this.cars.length; i++) {
             const car = this.cars[i];
-            this.apate.screen.drawSprite(car.x, car.y, carSprites[car.imgId].image, 2);
+            drawlib.spriteExt(Math.floor(car.x), Math.floor(car.y), carSprites[car.imgId].image, 2);
         }
     }
 

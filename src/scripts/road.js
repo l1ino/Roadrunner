@@ -1,10 +1,9 @@
-import { Apate, Entity } from '../engine/apate.js';
-import { spriteMgr } from '../engine/legacy-wrapper.js';
+import { Apate, DrawLib, Entity, spritelib } from '../engine/apate.js';
 import game from './game.js';
 
 const roadImgScale = 2;
 const roadImgElement = document.querySelector('#road');
-const roadSprite = spriteMgr.imgToSprite(roadImgElement);
+const roadSprite = spritelib.loadSync(roadImgElement);
 const roadlength = roadImgElement.width * roadImgScale;
 
 export default class Road extends Entity {
@@ -21,9 +20,12 @@ export default class Road extends Entity {
 
     reset() {}
 
-    draw() {
-        this.apate.screen.drawSprite(Math.floor(this.sectionsStarts[0]), this.roadY, roadSprite, roadImgScale);
-        this.apate.screen.drawSprite(Math.floor(this.sectionsStarts[1]), this.roadY, roadSprite, roadImgScale);
+    /**
+     * @param {DrawLib} drawlib 
+     */
+    draw(drawlib) {
+        drawlib.spriteExt(Math.floor(this.sectionsStarts[0]), this.roadY, roadSprite, roadImgScale);
+        drawlib.spriteExt(Math.floor(this.sectionsStarts[1]), this.roadY, roadSprite, roadImgScale);
     }
 
     update(delta) {

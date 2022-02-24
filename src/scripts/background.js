@@ -1,5 +1,4 @@
-import { Apate, Color, Entity } from '../engine/apate.js';
-import { ParticleSystem } from '../engine/legacy-wrapper.js';
+import { Apate, Color, DrawLib, Entity, ParticleSystem } from '../engine/apate.js';
 import game from './game.js';
 
 const skyStepSize = 128 / 8;
@@ -25,22 +24,26 @@ export default class Background extends Entity {
         this.apate = apate;
         this.priority = 0;
 
-        this.stars = new ParticleSystem({
-            origin: { x: 60, y: 0, w: 200, h: 30 },
-            velocity: { x: -15 },
-            emitDelay: 400,
-            colors: [new Color(255, 218, 42)],
-            lifetime: 5000
-        });
-        this.stars.start();
+        this.stars = new ParticleSystem(true, 10, true);
+        this.stars.generateParticle = () => {
+            return {
+                origin: { x: 60, y: 0, w: 200, h: 30 },
+                velocity: { x: -15 },
+                emitDelay: 400,
+                colors: [new Color(255, 218, 42)],
+                lifetime: 5000
+            };
+        };
     }
 
     reset() {
-        this.stars.reset();
-        this.stars.start();
+        this.stars.clearAll();
     }
 
-    draw() {
+    /**
+     * @param {DrawLib} drawlib
+     */
+    draw(drawlib) {
         for (let i = 0; i < skyStepSize; i++) {
             let changeDay = {
                 r: skyDayColor1.r - skyFallOfDay_red * i,
@@ -62,11 +65,11 @@ export default class Background extends Entity {
                 b: changeDay.b * dayMulti + changeNight.b * nightMulti
             };
 
-            this.apate.screen.drawRect(0, skyStepHeight * i, 256, skyStepHeight, c);
+            drawlib.rect(0, skyStepHeight * i, 256, skyStepHeight, c);
         }
 
         if (game.isNight) {
-            this.stars.draw(this.apate.screen);
+            this.stars.draw(drawlib);
         }
     }
 

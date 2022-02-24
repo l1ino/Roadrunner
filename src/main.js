@@ -7,6 +7,7 @@ apate.autoPauseOnLeave = false;
 document.querySelector('#screen').append(apate.htmlElement);
 apate.clearColor = new Color(230, 230, 230);
 apate.screen.resize(256, 128);
+apate.showInfo = true;
 
 // settings and data storage
 apate['load'] = () => {
@@ -23,18 +24,19 @@ apate['save'] = () => {
 };
 
 // initalize entities
-game.init(apate);
-apate.activeScene.add(game);
-apate.activeScene.add(game.entities.road);
-apate.activeScene.add(game.entities.player);
-apate.activeScene.add(game.entities.carMgr);
+console.log(apate);
+game.setApate(apate);
 apate.activeScene.add(game.entities.background);
+apate.activeScene.add(game.entities.road);
+apate.activeScene.add(game.entities.carMgr);
+apate.activeScene.add(game.entities.player);
+apate.activeScene.add(game);
 
 apate.load();
 apate.run();
 
 // additional controls
-apate.input.addButton(new Button('up', ['Space', 'KeyW', 'ArrowUp']));
+Button.up.addKeybind('Space');
 document.body.addEventListener('touchstart', () => {
     if (game.isAlive) {
         game.entities.player.jump();

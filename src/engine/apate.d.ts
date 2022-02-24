@@ -97,7 +97,7 @@ declare class Entity {
     constructor(config?: EntityConfig);
     set(events: ApateEventCollection): void;
     on(event: string, action: () => void): void;
-    init(): void;
+    setApate(): void;
     update(delta: number): void;
     draw(draw: DrawLib): void;
     destroy(): void;
@@ -314,7 +314,7 @@ declare class ParticleSystem extends Entity {
     private nextSpawn;
     private applyDelta;
     constructor(autoStart?: boolean, pps?: number, applyDelta?: boolean);
-    init(): void;
+    setApate(): void;
     spawn(particle: Particle): void;
     update(delta: number): void;
     draw(draw: DrawLib): void;
