@@ -1078,7 +1078,6 @@ class Apate {
             this._activeScene.run("update", delta);
             // draw
             this._activeScene.run("draw", this.screen);
-            this._apate.draw.text(1, 1, "FPS:" + lastFrames, Color.white);
             this._apate.screen_O.updateScreen();
             lastTime = time;
             frameCounter++;
