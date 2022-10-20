@@ -61,10 +61,12 @@ export default class Player extends Entity {
     update(delta) {
         if (!game.isAlive) return;
 
-        this.nextAnimationFrame -= delta;
+        this.nextAnimationFrame -= this.velY === 0 ? delta : delta / 1.5;
         if (this.nextAnimationFrame < 0) {
             this.currentAnimationFrame++;
-            if (this.currentAnimationFrame == 8) this.currentAnimationFrame = 0;
+            if (this.currentAnimationFrame == 8) {
+                this.currentAnimationFrame = 0;
+            }
 
             this.nextAnimationFrame = 1000 / this.animantionFPS;
         }
