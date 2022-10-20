@@ -117,7 +117,7 @@ class Game extends Entity {
                 this.nextScoreUpdate = scoreUpdateTime;
                 this.score++;
 
-                if (Math.floor(this.score) % 20 == 0) {
+                if (Math.floor(this.score) % 50 == 0) {
                     this.isNight = !this.isNight;
                 }
             }
