@@ -19,6 +19,7 @@ class Game extends Entity {
         this.priority = 100;
 
         this.debugMode = false;
+        this.actionButtonDown = false;
 
         this.isFirstLoad = true;
         this.gravity = 0.025;
@@ -48,6 +49,7 @@ class Game extends Entity {
         this.dayTimeColorMix = 0;
         this.nextSpeedUpdate = 0;
         this.nextScoreUpdate = 0;
+        this.actionButtonDown = false;
     }
 
     start() {
@@ -104,13 +106,16 @@ class Game extends Entity {
         if (this.dayTimeColorMix < 0) this.dayTimeColorMix = 0;
         if (this.dayTimeColorMix > 100) this.dayTimeColorMix = 100;
 
+        let actionButtonPressed = this.apate.isButtonPressed('Action1') || this.apate.isButtonPressed('Action2');
+        if (!actionButtonPressed) this.actionButtonDown = false;
+
         if (this.isAlive) {
             this.nextSpeedUpdate -= delta;
             this.nextScoreUpdate -= delta;
 
             if (this.nextSpeedUpdate <= 0) {
                 this.nextSpeedUpdate = speedUpdateTime;
-                this.gameSpeed += 0.01;
+                this.gameSpeed += 0.015;
             }
 
             if (this.nextScoreUpdate <= 0) {
@@ -121,8 +126,10 @@ class Game extends Entity {
                     this.isNight = !this.isNight;
                 }
             }
+
+            this.actionButtonDown = actionButtonPressed;
         } else {
-            if (this.apate.isButtonPressed('Action1') || this.apate.isButtonPressed('Action2')) {
+            if (!this.actionButtonDown && actionButtonPressed) {
                 this.restart();
             }
         }
