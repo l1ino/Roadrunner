@@ -1,6 +1,7 @@
 import Apate, { Entity } from '../engine/legacy-wrapper.js';
 import Background from './background.js';
 import CarMgr from './carMgr.js';
+import Laser from './laser.js';
 import Player from './player.js';
 import Road from './road.js';
 
@@ -36,6 +37,7 @@ class Game extends Entity {
             road: new Road(apate),
             player: new Player(apate),
             carMgr: new CarMgr(apate),
+            laser: new Laser(apate),
             background: new Background(apate)
         };
         this.isInitialized = true;

@@ -29,12 +29,14 @@ apate.activeScene.init(game);
 apate.activeScene.init(game.entities.road);
 apate.activeScene.init(game.entities.player);
 apate.activeScene.init(game.entities.carMgr);
+apate.activeScene.init(game.entities.laser);
 apate.activeScene.init(game.entities.background);
 
 apate.run();
 
 // additional controls
 apate._apate.input.addButton(new Button('up', ['Space', 'KeyW', 'ArrowUp']));
+apate._apate.input.addButton(new Button('laser', ['KeyF']));
 document.body.addEventListener('touchstart', () => {
     if (game.isAlive) {
         game.entities.player.jump();
